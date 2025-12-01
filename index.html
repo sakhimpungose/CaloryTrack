@@ -333,6 +333,12 @@
         </div>
         <h1>💪 Calorie Crusher</h1>
         <p class="subtitle">Friendly competition only—no shaming, just sweating (or napping)!</p>
+        <p style="font-size: 0.9rem; color: var(--text-muted); margin-top: 10px;">
+            📅 <span id="todayDate"></span>
+        </p>
+        <p style="font-size: 0.9rem; color: var(--accent); margin-top: 5px;">
+            ⏰ Time to Midnight: <span id="countdown" style="font-weight: bold;"></span>
+        </p>
         <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 5px;">Resets every Monday at 00:00</p>
     </header>
 
@@ -367,6 +373,9 @@
                     style="width: auto; font-size: 0.8rem; padding: 5px 10px; background: var(--input-bg); border: 1px solid var(--input-border); color: var(--text);">Reset
                     Demo</button>
             </h2>
+            <div id="leaderStatus" style="text-align: center; color: var(--text-muted); font-size: 0.9rem; margin-bottom: 10px; font-style: italic;">
+                <!-- Leader duration will appear here -->
+            </div>
             <ul id="leaderboard" class="leaderboard-list">
                 <!-- Items injected here -->
             </ul>
@@ -388,13 +397,89 @@
                 lastReset: Date.now()
             },
             theme: 'dark',
+            currentLeader: null,
+            leaderSince: null,
+            timers: [],
 
             async init() {
                 this.loadTheme();
                 await this.loadData();
                 this.checkWeeklyReset();
+                this.startTimers();
 
                 document.getElementById('entryForm').addEventListener('submit', (e) => this.handleSubmit(e));
+            },
+
+            startTimers() {
+                // Update date
+                this.updateDate();
+
+                // Update countdown to midnight
+                this.updateCountdown();
+                const countdownInterval = setInterval(() => this.updateCountdown(), 1000);
+                this.timers.push(countdownInterval);
+
+                // Update leader duration
+                this.updateLeaderDuration();
+                const leaderInterval = setInterval(() => this.updateLeaderDuration(), 1000);
+                this.timers.push(leaderInterval);
+            },
+
+            updateDate() {
+                const dateElement = document.getElementById('todayDate');
+                const today = new Date();
+                const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+                dateElement.textContent = today.toLocaleDateString('en-US', options);
+            },
+
+            updateCountdown() {
+                const countdownElement = document.getElementById('countdown');
+                const now = new Date();
+                const midnight = new Date();
+                midnight.setHours(24, 0, 0, 0);
+
+                const diff = midnight - now;
+                const hours = Math.floor(diff / (1000 * 60 * 60));
+                const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+                countdownElement.textContent = `${hours}h ${minutes}m ${seconds}s`;
+            },
+
+            updateLeaderDuration() {
+                const statusElement = document.getElementById('leaderStatus');
+                
+                if (!this.currentLeader || this.data.users.length === 0) {
+                    statusElement.textContent = '';
+                    return;
+                }
+
+                const sortedUsers = [...this.data.users].sort((a, b) => b.totalCalories - a.totalCalories);
+                const leader = sortedUsers[0];
+
+                // Check if leader has changed
+                if (this.currentLeader !== leader.name) {
+                    this.currentLeader = leader.name;
+                    this.leaderSince = Date.now();
+                }
+
+                if (this.leaderSince) {
+                    const elapsed = Date.now() - this.leaderSince;
+                    const hours = Math.floor(elapsed / (1000 * 60 * 60));
+                    const minutes = Math.floor((elapsed % (1000 * 60 * 60)) / (1000 * 60));
+                    const seconds = Math.floor((elapsed % (1000 * 60)) / 1000);
+
+                    let timeString = '';
+                    if (hours > 0) {
+                        timeString = `${hours}h ${minutes}m ${seconds}s`;
+                    } else if (minutes > 0) {
+                        timeString = `${minutes}m ${seconds}s`;
+                    } else {
+                        timeString = `${seconds}s`;
+                    }
+
+                    statusElement.innerHTML = `👑 <strong>${this.currentLeader}</strong> has been leading for <strong style="color: var(--accent);">${timeString}</strong>`;
+                }
             },
 
             loadTheme() {
@@ -563,7 +648,17 @@
 
                 if (sortedUsers.length === 0) {
                     list.innerHTML = '<li style="text-align:center; color:#666; padding:20px;">No entries yet. Be the first! 🏋️</li>';
+                    this.currentLeader = null;
+                    this.leaderSince = null;
+                    document.getElementById('leaderStatus').textContent = '';
                     return;
+                }
+
+                // Update leader tracking
+                const leader = sortedUsers[0];
+                if (this.currentLeader !== leader.name) {
+                    this.currentLeader = leader.name;
+                    this.leaderSince = Date.now();
                 }
 
                 sortedUsers.forEach((user, index) => {
