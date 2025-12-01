@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>💪 Calorie Crusher Leaderboard</title>
+    <style>
+        :root {
+            /* Base Variables - Default Dark Mode */
+            --primary: #87ceeb;
+            /* Sky Blue */
+            --secondary: #add8e6;
+            /* Light Blue */
+            --accent: #f5f5dc;
+            /* Beige */
+            --bg: #2f4f4f;
+            /* Dark Slate Gray */
+            --card-bg: #466060;
+            /* Slightly lighter than bg for contrast */
+            --text: #f5f5dc;
+            /* Beige */
+            --text-muted: #dcdcdc;
+            --input-bg: #3a5555;
+            --input-border: #5f7f7f;
+            --success: #4CAF50;
+            --danger: #f44336;
+        }
+
+        [data-theme="light"] {
+            --primary: #0077CC;
+            /* Medium Blue */
+            --secondary: #003087;
+            /* Dark Blue */
+            --accent: #003087;
+            /* Dark Blue */
+            --bg: #E1F5FE;
+            /* Light Cyan */
+            --card-bg: #ffffff;
+            /* White for better contrast on light bg */
+            --text: #003087;
+            /* Dark Blue */
+            --text-muted: #546e7a;
+            --input-bg: #ffffff;
+            --input-border: #B2EBF2;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            background: linear-gradient(45deg, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
+        /* Form Section */
+        .card {
+            background: var(--card-bg);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--input-border);
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: var(--accent);
+            font-weight: bold;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        input[type="file"] {
+            width: 100%;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid var(--input-border);
+            background: var(--input-bg);
+            color: var(--text);
+            font-size: 1rem;
+        }
+
+        button {
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 25px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            width: 100%;
+            font-weight: bold;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 69, 0, 0.4);
+        }
+
+        /* Leaderboard */
+        .leaderboard-list {
+            list-style: none;
+        }
+
+        .leaderboard-item {
+            display: flex;
+            align-items: center;
+            background: var(--card-bg);
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 10px;
+            transition: transform 0.2s;
+            border-left: 5px solid transparent;
+        }
+
+        .leaderboard-item:hover {
+            transform: scale(1.01);
+        }
+
+        .rank {
+            font-size: 1.5rem;
+            font-weight: bold;
+            width: 40px;
+            text-align: center;
+            margin-right: 15px;
+        }
+
+        .user-info {
+            flex-grow: 1;
+        }
+
+        .user-name {
+            font-size: 1.2rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .badge-icon {
+            font-size: 1.2rem;
+        }
+
+        .calories {
+            font-size: 1.2rem;
+            color: var(--accent);
+            font-weight: bold;
+        }
+
+        .calories span {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            font-weight: normal;
+        }
+
+        .history-toggle {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 0.9rem;
+            padding: 5px;
+            width: auto;
+            text-decoration: underline;
+        }
+
+        .history-toggle:hover {
+            color: var(--primary);
+            box-shadow: none;
+            transform: none;
+        }
+
+        .history-panel {
+            display: none;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #444;
+            width: 100%;
+        }
+
+        .history-panel.show {
+            display: block;
+        }
+
+        .history-entry {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9rem;
+            padding: 5px 0;
+            border-bottom: 1px solid #333;
+        }
+
+        .thumbnail {
+            width: 40px;
+            height: 40px;
+            object-fit: cover;
+            border-radius: 4px;
+            cursor: pointer;
+            border: 1px solid #555;
+        }
+
+        /* Modal for Image */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            max-width: 90%;
+            max-height: 80vh;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(255, 69, 0, 0.5);
+        }
+
+        .modal-close {
+            margin-top: 20px;
+            background: #333;
+            border: 1px solid #555;
+            width: auto;
+            padding: 8px 20px;
+        }
+
+        .privacy-note {
+            color: #888;
+            font-size: 0.8rem;
+            margin-top: 5px;
+        }
+
+        /* Rank Colors */
+        .rank-1 {
+            border-left-color: #FFD700;
+            background: linear-gradient(90deg, #2d2d2d, #3a3a20);
+        }
+
+        .rank-2 {
+            border-left-color: #C0C0C0;
+        }
+
+        .rank-3 {
+            border-left-color: #CD7F32;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 1.8rem;
+            }
+
+            .leaderboard-item {
+                flex-wrap: wrap;
+            }
+
+            .rank {
+                margin-bottom: 10px;
+            }
+
+            .calories {
+                width: 100%;
+                text-align: right;
+                margin-top: 5px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <div style="display: flex; justify-content: flex-end;">
+            <button onclick="app.toggleTheme()"
+                style="width: auto; padding: 8px 15px; font-size: 1.2rem; background: transparent; border: 1px solid var(--text); color: var(--text);">
+                <span id="themeIcon">🌗</span>
+            </button>
+        </div>
+        <h1>💪 Calorie Crusher</h1>
+        <p class="subtitle">Friendly competition only—no shaming, just sweating (or napping)!</p>
+        <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 5px;">Resets every Monday at 00:00</p>
+    </header>
+
+    <main>
+        <!-- Input Form -->
+        <section class="card">
+            <h2 style="margin-bottom: 15px; color: var(--secondary);">Add Daily Burn</h2>
+            <form id="entryForm">
+                <div class="form-group">
+                    <label for="username">Name / Nickname</label>
+                    <input type="text" id="username" required placeholder="e.g. Iron Mike" maxlength="20">
+                </div>
+                <div class="form-group">
+                    <label for="calories">Calories Burned</label>
+                    <input type="number" id="calories" required placeholder="e.g. 500" min="1" max="10000">
+                </div>
+                <div class="form-group">
+                    <label for="proof">Proof (Optional Screenshot)</label>
+                    <input type="file" id="proof" accept="image/png, image/jpeg">
+                    <p class="privacy-note">Only visible to participants. Max 5MB.</p>
+                </div>
+                <button type="submit">💪 Log It!</button>
+            </form>
+        </section>
+
+        <!-- Leaderboard -->
+        <section>
+            <h2
+                style="margin-bottom: 15px; color: var(--accent); display: flex; justify-content: space-between; align-items: center;">
+                Weekly Leaderboard
+                <button onclick="app.resetData()"
+                    style="width: auto; font-size: 0.8rem; padding: 5px 10px; background: var(--input-bg); border: 1px solid var(--input-border); color: var(--text);">Reset
+                    Demo</button>
+            </h2>
+            <ul id="leaderboard" class="leaderboard-list">
+                <!-- Items injected here -->
+            </ul>
+        </section>
+    </main>
+
+    <!-- Image Modal -->
+    <div id="imageModal" class="modal" onclick="app.closeModal()">
+        <img id="modalImage" class="modal-content" src="" alt="Proof">
+        <button class="modal-close" onclick="app.closeModal()">Close</button>
+    </div>
+
+    <script>
+        const app = {
+            API_URL: '/api',
+            THEME_KEY: 'calorie_leaderboard_theme',
+            data: {
+                users: [],
+                lastReset: Date.now()
+            },
+            theme: 'dark',
+
+            async init() {
+                this.loadTheme();
+                await this.loadData();
+                this.checkWeeklyReset();
+
+                document.getElementById('entryForm').addEventListener('submit', (e) => this.handleSubmit(e));
+            },
+
+            loadTheme() {
+                const storedTheme = localStorage.getItem(this.THEME_KEY);
+                this.theme = storedTheme || 'dark';
+                this.applyTheme();
+            },
+
+            toggleTheme() {
+                this.theme = this.theme === 'dark' ? 'light' : 'dark';
+                localStorage.setItem(this.THEME_KEY, this.theme);
+                this.applyTheme();
+            },
+
+            applyTheme() {
+                document.documentElement.setAttribute('data-theme', this.theme);
+                const icon = document.getElementById('themeIcon');
+                icon.textContent = this.theme === 'dark' ? '🌗' : '🌓';
+            },
+
+            async loadData() {
+                try {
+                    const res = await fetch(`${this.API_URL}/data`);
+                    const json = await res.json();
+                    this.data.users = json.users;
+                    this.data.lastReset = json.lastReset;
+                    this.render();
+                } catch (err) {
+                    console.error('Error loading data:', err);
+                }
+            },
+
+            async checkWeeklyReset() {
+                const now = new Date();
+                const lastResetDate = new Date(this.data.lastReset);
+
+                // Get current Monday 00:00
+                const currentMonday = new Date(now);
+                const day = currentMonday.getDay();
+                const diff = currentMonday.getDate() - day + (day === 0 ? -6 : 1); // adjust when day is sunday
+                currentMonday.setDate(diff);
+                currentMonday.setHours(0, 0, 0, 0);
+
+                // If last reset was before this week's Monday, reset
+                if (lastResetDate < currentMonday) {
+                    console.log("Weekly Reset Triggered!");
+                    try {
+                        const res = await fetch(`${this.API_URL}/reset`, { method: 'POST' });
+                        const json = await res.json();
+                        this.data.lastReset = json.lastReset;
+                        this.data.users = [];
+                        this.render();
+                        alert("It's a new week! Leaderboard has been reset. Good luck! 🚀");
+                    } catch (err) {
+                        console.error('Error resetting:', err);
+                    }
+                }
+            },
+
+            async resetData() {
+                if (confirm('Clear all data? This cannot be undone.')) {
+                    try {
+                        await fetch(`${this.API_URL}/reset`, { method: 'POST' });
+                        await this.loadData();
+                    } catch (err) {
+                        console.error(err);
+                    }
+                }
+            },
+
+            async handleSubmit(e) {
+                e.preventDefault();
+                const nameInput = document.getElementById('username');
+                const calsInput = document.getElementById('calories');
+                const fileInput = document.getElementById('proof');
+
+                const name = nameInput.value.trim();
+                const calories = parseInt(calsInput.value);
+                let imageBase64 = null;
+
+                if (fileInput.files && fileInput.files[0]) {
+                    try {
+                        imageBase64 = await this.resizeImage(fileInput.files[0]);
+                    } catch (err) {
+                        alert('Error processing image. Try a smaller file.');
+                        console.error(err);
+                        return;
+                    }
+                }
+
+                // Send to API
+                try {
+                    const res = await fetch(`${this.API_URL}/entry`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            name,
+                            calories,
+                            proof: imageBase64,
+                            date: new Date().toLocaleString()
+                        })
+                    });
+
+                    if (res.ok) {
+                        await this.loadData(); // Refresh leaderboard
+                        // Reset form
+                        calsInput.value = '';
+                        fileInput.value = '';
+                    } else {
+                        alert('Error saving entry');
+                    }
+                } catch (err) {
+                    console.error(err);
+                    alert('Network error');
+                }
+            },
+
+            resizeImage(file) {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.readAsDataURL(file);
+                    reader.onload = (event) => {
+                        const img = new Image();
+                        img.src = event.target.result;
+                        img.onload = () => {
+                            const canvas = document.createElement('canvas');
+                            const MAX_WIDTH = 300;
+                            const scaleSize = MAX_WIDTH / img.width;
+                            canvas.width = MAX_WIDTH;
+                            canvas.height = img.height * scaleSize;
+
+                            const ctx = canvas.getContext('2d');
+                            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                            resolve(canvas.toDataURL('image/jpeg', 0.7)); // Compress to JPEG 70%
+                        };
+                        img.onerror = reject;
+                    };
+                    reader.onerror = reject;
+                });
+            },
+
+            getBadges(rank, totalUsers) {
+                if (totalUsers === 0) return '';
+
+                // Top 3
+                if (rank === 0) return '🥇 Calorie Crusher';
+                if (rank === 1) return '🥈 Heat Seeker';
+                if (rank === 2) return '🥉 Flame On';
+
+                // Bottom 3 (only if enough users)
+                if (totalUsers >= 4) {
+                    if (rank === totalUsers - 1) return '😴 Couch Commander';
+                    if (rank === totalUsers - 2) return '🍕 Pizza Preservationist';
+                    if (rank === totalUsers - 3) return '🐌 Snail on a Stroll';
+                }
+
+                return '';
+            },
+
+            render() {
+                const list = document.getElementById('leaderboard');
+                list.innerHTML = '';
+
+                // Sort descending
+                const sortedUsers = [...this.data.users].sort((a, b) => b.totalCalories - a.totalCalories);
+
+                if (sortedUsers.length === 0) {
+                    list.innerHTML = '<li style="text-align:center; color:#666; padding:20px;">No entries yet. Be the first! 🏋️</li>';
+                    return;
+                }
+
+                sortedUsers.forEach((user, index) => {
+                    const badge = this.getBadges(index, sortedUsers.length);
+                    const li = document.createElement('li');
+                    li.className = `leaderboard-item rank-${index + 1}`;
+
+                    // Logs HTML
+                    const logsHtml = user.logs.map(log => `
+                        <div class="history-entry">
+                            <span>${log.date.split(',')[0]} - ${log.calories} cal</span>
+                            ${log.proof ? `<img src="${log.proof}" class="thumbnail" onclick="app.showImage('${log.proof}')" title="View Proof">` : ''}
+                        </div>
+                    `).join('');
+
+                    li.innerHTML = `
+                        <div class="rank">#${index + 1}</div>
+                        <div class="user-info">
+                            <div class="user-name">
+                                ${user.name} 
+                                ${badge ? `<span class="badge-icon" title="${badge}">${badge.split(' ')[0]}</span>` : ''}
+                            </div>
+                            <div style="font-size: 0.8rem; color: #888;">${badge ? badge.substring(2) : ''}</div>
+                            
+                            <button class="history-toggle" onclick="this.nextElementSibling.classList.toggle('show')">
+                                View History (${user.logs.length})
+                            </button>
+                            <div class="history-panel">
+                                ${logsHtml}
+                            </div>
+                        </div>
+                        <div class="calories">
+                            ${user.totalCalories}
+                            <span>kcal</span>
+                        </div>
+                    `;
+                    list.appendChild(li);
+                });
+            },
+
+            showImage(src) {
+                const modal = document.getElementById('imageModal');
+                const img = document.getElementById('modalImage');
+                img.src = src;
+                modal.classList.add('show');
+            },
+
+            closeModal() {
+                document.getElementById('imageModal').classList.remove('show');
+            }
+        };
+
+        // Start App
+        app.init();
+    </script>
+</body>
+
+</html>
